@@ -1,0 +1,321 @@
+"use client"
+import { useState } from 'react';
+import Link from 'next/link';
+import { Mail, Lock, Eye, EyeOff, User, Building2, Phone, CheckCircle } from 'lucide-react';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import { Checkbox } from '../../components/ui/checkbox';
+import { Card, CardContent } from '../../components/ui/card';
+
+export default function EmployerSignup() {
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [formData, setFormData] = useState({
+        fullName: '',
+        companyName: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        phoneNumber: '',
+        termsAccepted: false,
+    });
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+
+        // Check password match
+        if (formData.password !== formData.confirmPassword) {
+            alert("Passwords do not match");
+            return;
+        }
+
+        try {
+            const res = await fetch("http://localhost:5000/api/employers/register", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    name: formData.fullName,
+                    companyName: formData.companyName,
+                    email: formData.email,
+                    password: formData.password,
+                    phoneNumber: formData.phoneNumber,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                alert("Employer registered successfully!");
+                window.location.href = "/auth/employerSignin";
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Something went wrong");
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex">
+            {/* Left side - Image/Gradient */}
+            <div className="hidden lg:flex flex-1 bg-linear-to-br from-emerald-600 via-purple-600 to-blue-700 items-center justify-center p-8">
+                <div className="max-w-md text-white">
+                    <div className="mb-8">
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center mb-4">
+                            <Building2 className="h-10 w-10" />
+                        </div>
+                        <h2 className="text-4xl font-bold mb-4">Employer Registration</h2>
+                        <p className="text-lg opacity-90 mb-8">
+                            Join our DTR system and manage your team&apos;s attendance effortlessly.
+                        </p>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center shrink-0 mt-1">
+                                <CheckCircle className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-lg mb-1">Real-time Attendance Tracking</h3>
+                                <p className="text-sm opacity-80">Monitor employee check-ins, breaks, and working hours in real-time</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center shrink-0 mt-1">
+                                <CheckCircle className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-lg mb-1">Comprehensive Reports</h3>
+                                <p className="text-sm opacity-80">Generate detailed attendance reports and analytics for your team</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center shrink-0 mt-1">
+                                <CheckCircle className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-lg mb-1">Leave Management</h3>
+                                <p className="text-sm opacity-80">Approve leave requests and manage schedules efficiently</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right side - Signup Form */}
+            <div className="flex-1 flex items-center justify-center p-4 md:p-8 overflow-y-auto bg-gray-50">
+                <div className="w-full max-w-xl">
+                    <Card className="border-2">
+                        <CardContent className="p-6 md:p-8">
+                            {/* Logo */}
+                            <div className="flex justify-center items-center gap-2 mb-6">
+                                <div className="w-10 h-10 bg-linemeraldto-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                                    <Building2 className="text-white h-6 w-6" />
+                                </div>
+                                <span className="text-2xl font-semibold">DTR System</span>
+                            </div>
+
+                            {/* Header */}
+                            <div className="flex justify-center items-center text-center">
+                                <div className="mb-6">
+                                    <h1 className="text-3xl font-bold mb-2">Employer Sign Up</h1>
+                                    <p className="text-gray-600">Create your employer account to get started</p>
+                                </div>
+                            </div>
+
+                            {/* Signup Form */}
+                            <form className="space-y-5" onSubmit={handleSubmit}>
+                                {/* Full Name - Required */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="fullName" className="flex items-center gap-1">
+                                        Full Name <span className="text-red-500">*</span>
+                                    </Label>
+                                    <div className="relative">
+                                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <Input
+                                            id="fullName"
+                                            type="text"
+                                            placeholder="Enter your full name"
+                                            className="pl-10"
+                                            required
+                                            value={formData.fullName}
+                                            onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Company Name - Required */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="companyName" className="flex items-center gap-1">
+                                        Company Name <span className="text-red-500">*</span>
+                                    </Label>
+                                    <div className="relative">
+                                        <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <Input
+                                            id="companyName"
+                                            type="text"
+                                            placeholder="Enter your company name"
+                                            className="pl-10"
+                                            required
+                                            value={formData.companyName}
+                                            onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Email Address - Required */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="email" className="flex items-center gap-1">
+                                        Email Address <span className="text-red-500">*</span>
+                                    </Label>
+                                    <div className="relative">
+                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            placeholder="employer@company.com"
+                                            className="pl-10"
+                                            required
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500">This will be used for login and notifications</p>
+                                </div>
+
+                                {/* Password - Required */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="password" className="flex items-center gap-1">
+                                        Password <span className="text-red-500">*</span>
+                                    </Label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <Input
+                                            id="password"
+                                            type={showPassword ? 'text' : 'password'}
+                                            placeholder="Create a strong password"
+                                            className="pl-10 pr-10"
+                                            required
+                                            value={formData.password}
+                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff className="h-5 w-5" />
+                                            ) : (
+                                                <Eye className="h-5 w-5" />
+                                            )}
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-gray-500">Must be at least 8 characters with letters, numbers & special characters</p>
+                                </div>
+
+                                {/* Confirm Password - Required */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirmPassword" className="flex items-center gap-1">
+                                        Confirm Password <span className="text-red-500">*</span>
+                                    </Label>
+                                    <div className="relative">
+                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <Input
+                                            id="confirmPassword"
+                                            type={showConfirmPassword ? 'text' : 'password'}
+                                            placeholder="Re-enter your password"
+                                            className="pl-10 pr-10"
+                                            required
+                                            value={formData.confirmPassword}
+                                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                        >
+                                            {showConfirmPassword ? (
+                                                <EyeOff className="h-5 w-5" />
+                                            ) : (
+                                                <Eye className="h-5 w-5" />
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Phone Number - Optional */}
+                                <div className="space-y-2">
+                                    <Label htmlFor="phoneNumber">
+                                        Phone Number <span className="text-gray-400 text-xs">(Optional)</span>
+                                    </Label>
+                                    <div className="relative">
+                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                                        <Input
+                                            id="phoneNumber"
+                                            type="tel"
+                                            placeholder="+63 900 000-0000"
+                                            className="pl-10"
+                                            value={formData.phoneNumber}
+                                            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500">For contact or two-factor authentication</p>
+                                </div>
+
+                                {/* Terms & Conditions - Required */}
+                                <div className="flex items-start space-x-2 p-4 bg-gray-50 rounded-lg">
+                                    <Checkbox
+                                        id="terms"
+                                        className="mt-1"
+                                        checked={formData.termsAccepted}
+                                        onCheckedChange={(checked) =>
+                                            setFormData({ ...formData, termsAccepted: checked as boolean })
+                                        }
+                                        required
+                                    />
+                                    <label
+                                        htmlFor="terms"
+                                        className="text-sm text-gray-700 cursor-pointer"
+                                    >
+                                        I agree to the{' '}
+                                        <Link href="/terms" className="text-blue-600 hover:text-blue-700 font-medium underline">
+                                            Terms of Service
+                                        </Link>{' '}
+                                        and{' '}
+                                        <Link href="/privacy" className="text-blue-600 hover:text-blue-700 font-medium underline">
+                                            Privacy Policy
+                                        </Link>
+                                        <span className="text-red-500 ml-1">*</span>
+                                    </label>
+                                </div>
+
+                                {/* Submit Button */}
+                                <Button type="submit"
+                                    className="w-full bg-linear-to-r from-emerald-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                                    size="lg">
+                                    Create Employer Account
+                                </Button>
+                            </form>
+
+                            {/* Login Link */}
+                            <div className="mt-6 text-center">
+                                <p className="text-gray-600">
+                                    Already have an account?{' '}
+                                    <Link href="/auth/employerSignin" className="text-blue-600 hover:text-blue-700 font-semibold">
+                                        Sign In
+                                    </Link>
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </div>
+    );
+}

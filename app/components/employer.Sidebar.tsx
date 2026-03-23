@@ -33,7 +33,7 @@ export default function Emp02Sidebar({ isOpen = true, onClose }: SidebarProps) {
             <aside
                 className={cn(
                     "fixed lg:sticky top-0 left-0 h-screen flex flex-col z-50 transition-all duration-300 ease-in-out",
-                    "bg-indigo-500 rounded-r-3xl shadow-2xl",
+                    "bg-blue-800 rounded-r-3xl shadow-2xl",
                     isExpanded ? "w-64" : "w-20",
                     isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
                 )}
@@ -43,7 +43,7 @@ export default function Emp02Sidebar({ isOpen = true, onClose }: SidebarProps) {
                     <div className="flex items-center gap-3 min-w-0">
                         {/* Logo Icon */}
                         <div className="w-10 h-10 bg-linear-to-br from-purple-600 to-red-500 rounded-full flex items-center justify-center shrink-0">
-                            <div className="w-6 h-6 bg-indigo-500 rounded-full"></div>
+                            <div className="w-6 h-6 bg-blue-800 rounded-full"></div>
                         </div>
                         {/* Logo Text */}
                         {isExpanded && (
@@ -106,7 +106,7 @@ export default function Emp02Sidebar({ isOpen = true, onClose }: SidebarProps) {
                             className="w-full bg-white hover:bg-gray-100 text-[#6C5DD3] font-semibold rounded-xl gap-2"
                             asChild
                         >
-                            <Link href="/login">
+                            <Link href="/">
                                 <LogOut className="h-5 w-5" />
                                 Logout
                             </Link>

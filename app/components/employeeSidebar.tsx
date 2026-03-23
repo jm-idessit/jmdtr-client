@@ -107,7 +107,7 @@ export default function Emp01Sidebar({ isOpen = true, onClose }: SidebarProps) {
                             className="w-full bg-white hover:bg-gray-100 text-[#6C5DD3] font-semibold rounded-xl gap-2"
                             asChild
                         >
-                            <Link href="/login">
+                            <Link href="/">
                                 <LogOut className="h-5 w-5" />
                                 Logout
                             </Link>

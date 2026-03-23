@@ -13,13 +13,15 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
     const pathname = usePathname();
 
-    if (pathname.startsWith('/employee')) {
+    const showSidebar = pathname !== "/" && !pathname.startsWith("/login") && !pathname.startsWith("/register") && !pathname.startsWith("/about");
+
+    if (pathname.startsWith('/employee') && showSidebar) {
         return (
             <div className="min-h-screen flex">
                 <Emp01Sidebar />
-                <div className="flex-1 flex flex-col lg:ml-64">
+                <div className="flex-1 flex flex-col">
                     <Emp01Header />
-                    <div className="flex-1 overflow-auto p-6 md:p-8">
+                    <div className="flex-1 overflow-auto">
                         {children}
                     </div>
                 </div>
@@ -29,9 +31,9 @@ export function AppLayout({ children }: AppLayoutProps) {
         return (
             <div className="min-h-screen flex">
                 <Emp02Sidebar />
-                <div className="flex-1 flex flex-col lg:ml-64">
+                <div className="flex-1 flex flex-col">
                     <Emp02Header />
-                    <div className="flex-1 overflow-auto p-6 md:p-8">
+                    <div className="flex-1 overflow-auto">
                         {children}
                     </div>
                 </div>
