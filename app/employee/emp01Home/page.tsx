@@ -1,180 +1,72 @@
 "use client"
-import { Users, Clock, TrendingUp, Download, Filter, Search, Calendar, CheckCircle, XCircle, AlertCircle, UserCheck, UserX, MoreVertical } from 'lucide-react';
+import { Clock, Calendar, CheckCircle, AlertCircle, Download, Filter, ChevronRight, Coffee, User, Bell, Settings, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Input } from '../../components/ui/input';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function EmployerDTRPage() {
-    const [] = useState('March 23, 2026');
-    const [searchQuery, setSearchQuery] = useState('');
+export default function EmployeeDTRPage() {
+    const [currentTime, setCurrentTime] = useState(new Date());
+    const [isCheckedIn, setIsCheckedIn] = useState(false);
+    const [isOnBreak, setIsOnBreak] = useState(false);
 
-    const overviewStats = {
-        totalEmployees: 48,
-        presentToday: 42,
-        absentToday: 3,
-        onLeave: 3,
-        lateToday: 5,
-        avgWorkHours: 8.4,
+    // Update clock every second
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const todayRecord = {
+        date: 'March 23, 2026',
+        timeIn: isCheckedIn ? '8:30 AM' : '--:--',
+        timeOut: '--:--',
+        status: isCheckedIn ? 'checked-in' : 'not-started',
+        hoursWorked: isCheckedIn ? '4.5' : '0',
+        breakDuration: '0:45',
     };
 
-    const employeesStatus = [
-        {
-            id: 1,
-            name: 'Sarah Johnson',
-            department: 'Engineering',
-            position: 'Senior Developer',
-            avatar: 'SJ',
-            status: 'checked-in',
-            timeIn: '8:25 AM',
-            timeOut: '--:--',
-            hoursToday: '4.5',
-            weeklyHours: 38.5,
-        },
-        {
-            id: 2,
-            name: 'Michael Chen',
-            department: 'Engineering',
-            position: 'Frontend Developer',
-            avatar: 'MC',
-            status: 'checked-in',
-            timeIn: '8:45 AM',
-            timeOut: '--:--',
-            hoursToday: '4.25',
-            weeklyHours: 35.0,
-        },
-        {
-            id: 3,
-            name: 'Emily Rodriguez',
-            department: 'Design',
-            position: 'UI/UX Designer',
-            avatar: 'ER',
-            status: 'checked-in',
-            timeIn: '8:30 AM',
-            timeOut: '--:--',
-            hoursToday: '4.5',
-            weeklyHours: 40.0,
-        },
-        {
-            id: 4,
-            name: 'David Kim',
-            department: 'Marketing',
-            position: 'Marketing Manager',
-            avatar: 'DK',
-            status: 'on-leave',
-            timeIn: '--:--',
-            timeOut: '--:--',
-            hoursToday: '0',
-            weeklyHours: 32.0,
-        },
-        {
-            id: 5,
-            name: 'Jessica Williams',
-            department: 'HR',
-            position: 'HR Specialist',
-            avatar: 'JW',
-            status: 'checked-in',
-            timeIn: '8:20 AM',
-            timeOut: '--:--',
-            hoursToday: '4.67',
-            weeklyHours: 39.5,
-        },
-        {
-            id: 6,
-            name: 'Robert Taylor',
-            department: 'Sales',
-            position: 'Sales Executive',
-            avatar: 'RT',
-            status: 'absent',
-            timeIn: '--:--',
-            timeOut: '--:--',
-            hoursToday: '0',
-            weeklyHours: 28.0,
-        },
-        {
-            id: 7,
-            name: 'Amanda Lee',
-            department: 'Engineering',
-            position: 'Backend Developer',
-            avatar: 'AL',
-            status: 'checked-in',
-            timeIn: '9:10 AM',
-            timeOut: '--:--',
-            hoursToday: '3.83',
-            weeklyHours: 37.0,
-        },
-        {
-            id: 8,
-            name: 'James Brown',
-            department: 'Finance',
-            position: 'Financial Analyst',
-            avatar: 'JB',
-            status: 'checked-in',
-            timeIn: '8:28 AM',
-            timeOut: '--:--',
-            hoursToday: '4.53',
-            weeklyHours: 40.5,
-        },
+    const notifications = [
+        { id: 1, type: 'warning', message: 'You forgot to clock out yesterday', time: '2 hours ago', read: false },
+        { id: 2, type: 'info', message: 'Your leave request has been approved', time: '5 hours ago', read: false },
+        { id: 3, type: 'reminder', message: 'Don\'t forget to submit your timesheet', time: '1 day ago', read: true },
     ];
 
-    const pendingLeaveRequests = [
-        {
-            id: 1,
-            employeeName: 'Sarah Johnson',
-            department: 'Engineering',
-            leaveType: 'Vacation Leave',
-            dates: 'Apr 5-7, 2026',
-            days: 3,
-            reason: 'Family vacation',
-            avatar: 'SJ',
-        },
-        {
-            id: 2,
-            employeeName: 'Michael Chen',
-            department: 'Engineering',
-            leaveType: 'Sick Leave',
-            dates: 'Mar 28, 2026',
-            days: 1,
-            reason: 'Medical appointment',
-            avatar: 'MC',
-        },
+    const weekSummary = {
+        totalHours: 38.5,
+        requiredHours: 40,
+        daysPresent: 4,
+        daysAbsent: 0,
+        daysLate: 1,
+    };
+
+    const recentAttendance = [
+        { date: 'Mar 22, 2026', day: 'Friday', timeIn: '8:25 AM', timeOut: '5:35 PM', breakDuration: '0:45', hours: '9.17', status: 'present' },
+        { date: 'Mar 21, 2026', day: 'Thursday', timeIn: '8:45 AM', timeOut: '5:30 PM', breakDuration: '0:30', hours: '8.75', status: 'late' },
+        { date: 'Mar 20, 2026', day: 'Wednesday', timeIn: '8:20 AM', timeOut: '5:25 PM', breakDuration: '0:45', hours: '9.08', status: 'present' },
+        { date: 'Mar 19, 2026', day: 'Tuesday', timeIn: '8:30 AM', timeOut: '5:30 PM', breakDuration: '0:45', hours: '9.00', status: 'present' },
+        { date: 'Mar 18, 2026', day: 'Monday', timeIn: '8:28 AM', timeOut: '5:32 PM', breakDuration: '0:45', hours: '9.07', status: 'present' },
     ];
 
-    const departmentStats = [
-        { name: 'Engineering', total: 18, present: 16, absent: 1, onLeave: 1, attendance: 89 },
-        { name: 'Design', total: 8, present: 7, absent: 0, onLeave: 1, attendance: 88 },
-        { name: 'Marketing', total: 10, present: 9, absent: 1, onLeave: 0, attendance: 90 },
-        { name: 'Sales', total: 7, present: 6, absent: 1, onLeave: 0, attendance: 86 },
-        { name: 'HR', total: 3, present: 3, absent: 0, onLeave: 0, attendance: 100 },
-        { name: 'Finance', total: 2, present: 1, absent: 0, onLeave: 1, attendance: 50 },
+    const upcomingLeaves = [
+        { type: 'Vacation Leave', dates: 'Apr 5-7, 2026', days: 3, status: 'approved' },
+        { type: 'Sick Leave', dates: 'Mar 28, 2026', days: 1, status: 'pending' },
     ];
 
-    const getStatusBadge = (status: string) => {
-        switch (status) {
-            case 'checked-in':
-                return (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                        <CheckCircle className="h-3 w-3" />
-                        Present
-                    </span>
-                );
-            case 'absent':
-                return (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
-                        <XCircle className="h-3 w-3" />
-                        Absent
-                    </span>
-                );
-            case 'on-leave':
-                return (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                        <Calendar className="h-3 w-3" />
-                        On Leave
-                    </span>
-                );
-            default:
-                return null;
-        }
+    const handleCheckIn = () => {
+        setIsCheckedIn(true);
+    };
+
+    const handleCheckOut = () => {
+        setIsCheckedIn(false);
+    };
+
+    const handleBreakStart = () => {
+        setIsOnBreak(true);
+
+    };
+
+    const handleBreakEnd = () => {
+        setIsOnBreak(false);
+
     };
 
     return (
@@ -183,163 +75,240 @@ export default function EmployerDTRPage() {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Team Attendance Dashboard</h1>
-                        <p className="text-gray-600 mt-1">Monitor and manage employee attendance</p>
+                        <h1 className="text-3xl font-bold text-gray-900">My Daily Time Record</h1>
+                        <p className="text-gray-600 mt-1">Track your attendance and working hours</p>
                     </div>
                     <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <Button variant="outline" size="icon" className="relative">
+                                <Bell className="h-4 w-4" />
+                                {notifications.filter(n => !n.read).length > 0 && (
+                                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                                        {notifications.filter(n => !n.read).length}
+                                    </span>
+                                )}
+                            </Button>
+                        </div>
                         <Button variant="outline" className="gap-2">
                             <Filter className="h-4 w-4" />
                             Filter
                         </Button>
                         <Button variant="outline" className="gap-2">
                             <Download className="h-4 w-4" />
-                            Export Report
+                            Export
                         </Button>
                     </div>
                 </div>
 
-                {/* Overview Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    <Card>
-                        <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600">Total Employees</p>
-                                    <p className="text-2xl font-bold mt-1">{overviewStats.totalEmployees}</p>
+                {/* Time In/Out Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Clock In/Out Card */}
+                    <Card className="lg:col-span-2 bg-linear-to-br from-emerald-600 to-purple-600 text-white border-0">
+                        <CardContent className="p-8">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="h-5 w-5" />
+                                        <span className="text-sm opacity-90">{todayRecord.date}</span>
+                                    </div>
+                                    <div>
+                                        <div className="text-6xl font-bold font-mono">
+                                            {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                        </div>
+                                        <div className="text-sm opacity-90 mt-2">
+                                            {currentTime.toLocaleDateString('en-US', { weekday: 'long' })}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-6 pt-4">
+                                        <div>
+                                            <div className="text-sm opacity-90">Time In</div>
+                                            <div className="text-2xl font-semibold">{todayRecord.timeIn}</div>
+                                        </div>
+                                        <div className="h-12 w-px bg-white/30"></div>
+                                        <div>
+                                            <div className="text-sm opacity-90">Time Out</div>
+                                            <div className="text-2xl font-semibold">{todayRecord.timeOut}</div>
+                                        </div>
+                                        <div className="h-12 w-px bg-white/30"></div>
+                                        <div>
+                                            <div className="text-sm opacity-90">Break</div>
+                                            <div className="text-2xl font-semibold">{todayRecord.breakDuration}</div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <Users className="h-5 w-5 text-blue-600" />
+                                <div className="flex flex-col gap-3">
+                                    {!isCheckedIn ? (
+                                        <>
+                                            <Button
+                                                size="lg"
+                                                variant="secondary"
+                                                className="bg-white text-green-600 hover:bg-gray-100 font-semibold px-8 py-6 text-lg gap-2"
+                                                onClick={handleCheckIn}
+                                            >
+                                                <Clock className="h-5 w-5" />
+                                                Clock In
+                                            </Button>
+                                            <div className="text-center text-sm opacity-90">
+                                                Click to start your shift
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Button
+                                                size="lg"
+                                                variant="secondary"
+                                                className="bg-white text-red-600 hover:bg-gray-100 font-semibold px-8 py-6 text-lg gap-2"
+                                                onClick={handleCheckOut}
+                                            >
+                                                <Clock className="h-5 w-5" />
+                                                Clock Out
+                                            </Button>
+                                            {!isOnBreak ? (
+                                                <Button
+                                                    size="lg"
+                                                    variant="outline"
+                                                    className="bg-white/10 border-white text-white hover:bg-white/20 font-semibold px-8 py-3 gap-2"
+                                                    onClick={handleBreakStart}
+                                                >
+                                                    <Coffee className="h-4 w-4" />
+                                                    Start Break
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    size="lg"
+                                                    variant="outline"
+                                                    className="bg-yellow-500 border-yellow-600 text-white hover:bg-yellow-600 font-semibold px-8 py-3 gap-2 animate-pulse"
+                                                    onClick={handleBreakEnd}
+                                                >
+                                                    <Coffee className="h-4 w-4" />
+                                                    End Break
+                                                </Button>
+                                            )}
+                                            <div className="text-center text-sm opacity-90">
+                                                Hours Today: {todayRecord.hoursWorked}h
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
+                    {/* Quick Stats */}
                     <Card>
-                        <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600">Present Today</p>
-                                    <p className="text-2xl font-bold mt-1 text-green-600">{overviewStats.presentToday}</p>
+                        <CardHeader>
+                            <CardTitle className="text-lg">This Week</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div>
+                                <div className="flex justify-between text-sm mb-2">
+                                    <span className="text-gray-600">Hours Worked</span>
+                                    <span className="font-semibold">{weekSummary.totalHours} / {weekSummary.requiredHours} hrs</span>
                                 </div>
-                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                    <UserCheck className="h-5 w-5 text-green-600" />
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div
+                                        className="bg-blue-600 h-2 rounded-full"
+                                        style={{ width: `${(weekSummary.totalHours / weekSummary.requiredHours) * 100}%` }}
+                                    ></div>
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600">Absent</p>
-                                    <p className="text-2xl font-bold mt-1 text-red-600">{overviewStats.absentToday}</p>
+                            <div className="grid grid-cols-2 gap-4 pt-2">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <CheckCircle className="h-5 w-5 text-green-600" />
+                                    </div>
+                                    <div>
+                                        <div className="text-2xl font-bold">{weekSummary.daysPresent}</div>
+                                        <div className="text-xs text-gray-600">Present</div>
+                                    </div>
                                 </div>
-                                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                                    <UserX className="h-5 w-5 text-red-600" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600">On Leave</p>
-                                    <p className="text-2xl font-bold mt-1 text-blue-600">{overviewStats.onLeave}</p>
-                                </div>
-                                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                    <Calendar className="h-5 w-5 text-blue-600" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600">Late Today</p>
-                                    <p className="text-2xl font-bold mt-1 text-yellow-600">{overviewStats.lateToday}</p>
-                                </div>
-                                <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                                    <AlertCircle className="h-5 w-5 text-yellow-600" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600">Avg Hours</p>
-                                    <p className="text-2xl font-bold mt-1">{overviewStats.avgWorkHours}h</p>
-                                </div>
-                                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                    <Clock className="h-5 w-5 text-purple-600" />
+                                <div className="flex items-center gap-2">
+                                    <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                        <AlertCircle className="h-5 w-5 text-yellow-600" />
+                                    </div>
+                                    <div>
+                                        <div className="text-2xl font-bold">{weekSummary.daysLate}</div>
+                                        <div className="text-xs text-gray-600">Late</div>
+                                    </div>
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Employee Status and Leave Requests */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Employee Attendance Status */}
-                    <Card className="lg:col-span-2">
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <CardTitle>Employee Attendance - Today</CardTitle>
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <Input
-                                        placeholder="Search employees..."
-                                        className="pl-9 w-64"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                    />
-                                </div>
+                {/* Monthly Summary */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Monthly Summary - March 2026</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <div className="text-center p-4 bg-blue-50 rounded-lg">
+                                <div className="text-3xl font-bold text-blue-600">156.5</div>
+                                <div className="text-sm text-gray-600 mt-1">Total Hours</div>
                             </div>
+                            <div className="text-center p-4 bg-green-50 rounded-lg">
+                                <div className="text-3xl font-bold text-green-600">18</div>
+                                <div className="text-sm text-gray-600 mt-1">Days Present</div>
+                            </div>
+                            <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                                <div className="text-3xl font-bold text-yellow-600">3</div>
+                                <div className="text-sm text-gray-600 mt-1">Times Late</div>
+                            </div>
+                            <div className="text-center p-4 bg-purple-50 rounded-lg">
+                                <div className="text-3xl font-bold text-purple-600">8.5</div>
+                                <div className="text-sm text-gray-600 mt-1">Avg Hours/Day</div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Attendance History and Leaves */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Attendance History */}
+                    <Card className="lg:col-span-2">
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle>Recent Attendance</CardTitle>
+                            <Button variant="ghost" size="sm" className="gap-1">
+                                View All
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
                                         <tr className="border-b">
-                                            <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">Employee</th>
-                                            <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">Department</th>
-                                            <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">Status</th>
+                                            <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">Date</th>
+                                            <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">Day</th>
                                             <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">Time In</th>
-                                            <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">Hours Today</th>
-                                            <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">Week Total</th>
-                                            <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600"></th>
+                                            <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">Time Out</th>
+                                            <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">Break</th>
+                                            <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">Hours</th>
+                                            <th className="text-left py-3 px-2 text-sm font-semibold text-gray-600">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {employeesStatus.map((employee) => (
-                                            <tr key={employee.id} className="border-b hover:bg-gray-50">
+                                        {recentAttendance.map((record, index) => (
+                                            <tr key={index} className="border-b hover:bg-gray-50">
+                                                <td className="py-3 px-2 text-sm">{record.date}</td>
+                                                <td className="py-3 px-2 text-sm text-gray-600">{record.day}</td>
+                                                <td className="py-3 px-2 text-sm font-mono">{record.timeIn}</td>
+                                                <td className="py-3 px-2 text-sm font-mono">{record.timeOut}</td>
+                                                <td className="py-3 px-2 text-sm font-mono">{record.breakDuration}</td>
+                                                <td className="py-3 px-2 text-sm font-semibold">{record.hours}h</td>
                                                 <td className="py-3 px-2">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 bg-linear-to-br from-emerald-600 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0">
-                                                            {employee.avatar}
-                                                        </div>
-                                                        <div>
-                                                            <div className="font-semibold text-sm">{employee.name}</div>
-                                                            <div className="text-xs text-gray-500">{employee.position}</div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="py-3 px-2 text-sm text-gray-600">{employee.department}</td>
-                                                <td className="py-3 px-2">{getStatusBadge(employee.status)}</td>
-                                                <td className="py-3 px-2 text-sm font-mono">{employee.timeIn}</td>
-                                                <td className="py-3 px-2 text-sm font-semibold">{employee.hoursToday}h</td>
-                                                <td className="py-3 px-2 text-sm">{employee.weeklyHours}h</td>
-                                                <td className="py-3 px-2">
-                                                    <Button variant="ghost" size="sm">
-                                                        <MoreVertical className="h-4 w-4" />
-                                                    </Button>
+                                                    {record.status === 'present' ? (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                                            <CheckCircle className="h-3 w-3" />
+                                                            Present
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                                                            <AlertCircle className="h-3 w-3" />
+                                                            Late
+                                                        </span>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -349,145 +318,114 @@ export default function EmployerDTRPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Pending Leave Requests */}
+                    {/* Upcoming Leaves */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-lg">Pending Leave Requests</CardTitle>
+                            <CardTitle className="text-lg">Leave Requests</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {pendingLeaveRequests.map((request) => (
-                                <div key={request.id} className="p-4 border rounded-lg space-y-3">
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-10 h-10 bg-linear-to-br from-emerald-600 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0">
-                                            {request.avatar}
+                            {upcomingLeaves.map((leave, index) => (
+                                <div key={index} className="p-4 bg-gray-50 rounded-lg space-y-2">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="font-semibold text-sm">{leave.type}</div>
+                                            <div className="text-xs text-gray-600 mt-1">{leave.dates}</div>
+                                            <div className="text-xs text-gray-500 mt-1">{leave.days} day{leave.days > 1 ? 's' : ''}</div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="font-semibold text-sm">{request.employeeName}</div>
-                                            <div className="text-xs text-gray-600">{request.department}</div>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1 text-sm">
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">Type:</span>
-                                            <span className="font-medium">{request.leaveType}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">Dates:</span>
-                                            <span className="font-medium">{request.dates}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">Duration:</span>
-                                            <span className="font-medium">{request.days} day{request.days > 1 ? 's' : ''}</span>
-                                        </div>
-                                    </div>
-                                    <div className="text-xs text-gray-600 italic">
-                                        Reason: {request.reason}
-                                    </div>
-                                    <div className="flex gap-2 pt-2">
-                                        <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700">
-                                            Approve
-                                        </Button>
-                                        <Button size="sm" variant="outline" className="flex-1 text-red-600 border-red-600 hover:bg-red-50">
-                                            Reject
-                                        </Button>
+                                        {leave.status === 'approved' ? (
+                                            <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                                                Approved
+                                            </span>
+                                        ) : (
+                                            <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                                                Pending
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             ))}
+                            <Button variant="outline" className="w-full mt-4">
+                                Request Leave
+                            </Button>
                         </CardContent>
                     </Card>
                 </div>
 
-                {/* Department Stats */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Department-wise Attendance</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b">
-                                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Department</th>
-                                        <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600">Total Employees</th>
-                                        <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600">Present</th>
-                                        <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600">Absent</th>
-                                        <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600">On Leave</th>
-                                        <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600">Attendance %</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {departmentStats.map((dept, index) => (
-                                        <tr key={index} className="border-b hover:bg-gray-50">
-                                            <td className="py-4 px-4 font-semibold">{dept.name}</td>
-                                            <td className="py-4 px-4 text-center">{dept.total}</td>
-                                            <td className="py-4 px-4 text-center">
-                                                <span className="inline-flex items-center justify-center w-8 h-8 bg-green-100 text-green-700 rounded-full text-sm font-semibold">
-                                                    {dept.present}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-4 text-center">
-                                                <span className="inline-flex items-center justify-center w-8 h-8 bg-red-100 text-red-700 rounded-full text-sm font-semibold">
-                                                    {dept.absent}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-4 text-center">
-                                                <span className="inline-flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold">
-                                                    {dept.onLeave}
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-4">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                                        <div
-                                                            className={`h-2 rounded-full ${dept.attendance >= 90
-                                                                ? 'bg-green-600'
-                                                                : dept.attendance >= 75
-                                                                    ? 'bg-yellow-600'
-                                                                    : 'bg-red-600'
-                                                                }`}
-                                                            style={{ width: `${dept.attendance}%` }}
-                                                        ></div>
-                                                    </div>
-                                                    <span className="text-sm font-semibold w-12 text-right">{dept.attendance}%</span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                        <CardContent className="p-6 text-center">
-                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <Download className="h-6 w-6 text-blue-600" />
+                {/* Employee Profile Card */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <Card className="lg:col-span-2">
+                        <CardHeader>
+                            <CardTitle>My Profile</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex items-start gap-6">
+                                <div className="w-24 h-24 bg-linear-to-br from-emerald-600 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shrink-0">
+                                    JD
+                                </div>
+                                <div className="flex-1 space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-sm text-gray-600">Full Name</label>
+                                            <p className="font-semibold">John Doe</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm text-gray-600">Employee ID</label>
+                                            <p className="font-semibold">EMP-2024-001</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm text-gray-600">Department</label>
+                                            <p className="font-semibold">Engineering</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm text-gray-600">Position</label>
+                                            <p className="font-semibold">Senior Developer</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm text-gray-600">Email</label>
+                                            <p className="font-semibold">john.doe@company.com</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm text-gray-600">Work Schedule</label>
+                                            <p className="font-semibold">8:00 AM - 5:00 PM</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-3 pt-4">
+                                        <Button variant="outline" className="gap-2">
+                                            <User className="h-4 w-4" />
+                                            Edit Profile
+                                        </Button>
+                                        <Button variant="outline" className="gap-2">
+                                            <Settings className="h-4 w-4" />
+                                            Settings
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
-                            <h3 className="font-semibold mb-1">Download Reports</h3>
-                            <p className="text-sm text-gray-600">Export attendance data to Excel or PDF</p>
                         </CardContent>
                     </Card>
 
-                    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                        <CardContent className="p-6 text-center">
-                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <Calendar className="h-6 w-6 text-green-600" />
-                            </div>
-                            <h3 className="font-semibold mb-1">Manage Schedules</h3>
-                            <p className="text-sm text-gray-600">Set and update employee work schedules</p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                        <CardContent className="p-6 text-center">
-                            <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <TrendingUp className="h-6 w-6 text-purple-600" />
-                            </div>
-                            <h3 className="font-semibold mb-1">View Analytics</h3>
-                            <p className="text-sm text-gray-600">Detailed attendance trends and insights</p>
+                    {/* Quick Actions */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">Quick Actions</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <Button variant="outline" className="w-full justify-start gap-2">
+                                <FileText className="h-4 w-4" />
+                                View Payslip
+                            </Button>
+                            <Button variant="outline" className="w-full justify-start gap-2">
+                                <Calendar className="h-4 w-4" />
+                                Request Leave
+                            </Button>
+                            <Button variant="outline" className="w-full justify-start gap-2">
+                                <Download className="h-4 w-4" />
+                                Download DTR Report
+                            </Button>
+                            <Button variant="outline" className="w-full justify-start gap-2">
+                                <Clock className="h-4 w-4" />
+                                View Schedule
+                            </Button>
                         </CardContent>
                     </Card>
                 </div>
@@ -495,3 +433,4 @@ export default function EmployerDTRPage() {
         </div>
     );
 }
+
