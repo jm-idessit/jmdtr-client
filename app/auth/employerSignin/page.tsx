@@ -7,8 +7,12 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Card, CardContent } from '../../components/ui/card';
+import { loginEmployer } from '@/services/employerApi';
+import { useRouter } from 'next/navigation';
+import { toast } from 'react-hot-toast';
 
 export default function LoginPage() {
+    const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
     const [formData, setFormData] = useState({
@@ -19,25 +23,13 @@ export default function LoginPage() {
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        const res = await fetch("http://localhost:5000/api/employers/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({
-                email: formData.email,
-                password: formData.password,
-            }),
-        });
+        const data = await loginEmployer({ email: formData.email, password: formData.password });
 
-        const data = await res.json();
-
-        if (res.ok) {
-            window.location.href = "/employer/emp02Home";
+        if (data.message === "Login successful") {
+            router.push("/employer/emp02Home");
         } else {
-            alert(data.message);
-        }
+            toast.error(data.message);
+        }   
     };
 
     return (
