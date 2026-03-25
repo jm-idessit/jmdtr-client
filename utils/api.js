@@ -10,6 +10,7 @@ const getBaseURL = () => {
 const API = axios.create({
   baseURL: getBaseURL(),
   withCredentials: true,
+  credentials: "include",
 });
 
 export { API, getBaseURL };
