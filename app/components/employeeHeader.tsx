@@ -1,24 +1,48 @@
 "use client";
 import { Input } from '../components/ui/input';
-import { Bell, Search, User } from "lucide-react";
+import { Bell, Menu, Search, User } from "lucide-react";
 import { Button } from "../components/ui/button";
 import Link from 'next/link';
 import { getEmployeeProfile } from '../../services/employeeApi';
 import { useEffect, useState } from 'react';
 
-export function Emp01Header() {
-    const [employeeProfile, setEmployeeProfile] = useState<any>(null);
-    const handleGetEmployeeProfile = async () => {
-        const response = await getEmployeeProfile();
-        setEmployeeProfile(response);
-    }
+type EmployeeProfile = {
+    profile?: string;
+    name?: string;
+    email?: string;
+};
+
+export function Emp01Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
+    const [employeeProfile, setEmployeeProfile] = useState<EmployeeProfile | null>(null);
 
     useEffect(() => {
-        handleGetEmployeeProfile();
+        let cancelled = false;
+        (async () => {
+            try {
+                const response = await getEmployeeProfile();
+                if (!cancelled) setEmployeeProfile(response as EmployeeProfile);
+            } catch {
+                // Ignore profile fetch errors (header will render without profile).
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     return (
-        <header className="h-16 border-b bg-white flex items-center justify-between px-6 sticky top-0 z-10">
+        <header className="h-16 border-b bg-white flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10">
+
+            {/* Mobile menu button */}
+            <button
+                type="button"
+                aria-label="Open sidebar"
+                onClick={onOpenSidebar}
+                className="lg:hidden p-2 rounded-md hover:bg-gray-50 text-gray-700"
+            >
+                <Menu className="h-5 w-5" />
+            </button>
 
             <div className="flex-1 max-w-md mx-8 hidden md:block">
                 <div className="relative">
@@ -34,14 +58,18 @@ export function Emp01Header() {
             <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="flex items-center gap-2">
                     <Bell className="h-5 w-5" />
-                    <span className="text-sm font-medium truncate text-black">{employeeProfile?.profile}</span>
+                    <span className="hidden sm:inline-flex text-sm font-medium truncate text-black">
+                        {employeeProfile?.profile}
+                    </span>
                 </Button>
                 <Link href="/employee/emp01Profile">
                     <Button variant="ghost" size="icon">
                         <User className="h-5 w-5" />
                     </Button>
                 </Link>
-                <span className="text-sm font-medium truncate text-black">{employeeProfile?.name}</span>
+                <span className="hidden sm:inline-flex text-sm font-medium truncate text-black max-w-[180px]">
+                    {employeeProfile?.name}
+                </span>
             </div>
         </header>
     );
