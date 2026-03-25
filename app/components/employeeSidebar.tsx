@@ -3,7 +3,8 @@ import { Button } from '../components/ui/button';
 import { cn } from '../components/ui/utils';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { getEmployeeProfile } from '../../services/employeeApi';
 
 interface SidebarProps {
     isOpen?: boolean;
@@ -19,7 +20,14 @@ const navItems = [
 export default function Emp01Sidebar({ isOpen = true, onClose }: SidebarProps) {
     const pathname = usePathname();
     const [isExpanded, setIsExpanded] = useState(true);
-
+    const [employeeProfile, setEmployeeProfile] = useState<any>(null);
+    const handleGetEmployeeProfile = async () => {
+        const response = await getEmployeeProfile();
+        setEmployeeProfile(response);
+    }
+    useEffect(() => {
+        handleGetEmployeeProfile();
+    }, []);
     return (
         <>
             {/* Mobile overlay */}
@@ -120,11 +128,11 @@ export default function Emp01Sidebar({ isOpen = true, onClose }: SidebarProps) {
                     <div className="p-4 border-t border-[#3E4268]/50">
                         <Link href="/employee/emp01Profile" className="flex items-center gap-3 px-3 py-3 hover:bg-[#3E4268]/50 rounded-xl transition-colors">
                             <div className="w-8 h-8 bg-linear-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center shrink-0">
-                                <span className="text-sm text-white font-semibold">JD</span>
+                                <span className="text-sm text-white font-semibold">{employeeProfile?.profile}</span>
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate text-white">Employee Doe</p>
-                                <p className="text-xs text-[#A9ABBA] truncate">employee1@example.com</p>
+                                <p className="text-sm font-medium truncate text-white">{employeeProfile?.name}</p>
+                                <p className="text-xs text-[#A9ABBA] truncate">{employeeProfile?.email}</p>
                             </div>
                         </Link>
                     </div>
@@ -138,7 +146,7 @@ export default function Emp01Sidebar({ isOpen = true, onClose }: SidebarProps) {
                             className="flex justify-center p-2 hover:bg-[#3E4268]/50 rounded-xl transition-colors"
                         >
                             <div className="w-8 h-8 bg-linear-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
-                                <span className="text-sm text-white font-semibold">JD</span>
+                                <span className="text-sm text-white font-semibold">{employeeProfile?.profile}</span>
                             </div>
                         </Link>
                     </div>

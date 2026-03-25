@@ -3,8 +3,18 @@ import { Input } from '../components/ui/input';
 import { Bell, Search, User } from "lucide-react";
 import { Button } from "../components/ui/button";
 import Link from 'next/link';
+import { getEmployerProfile } from '../../services/employerApi';
+import { useEffect, useState } from 'react';
 
 export function Emp02Header() {
+    const [employerProfile, setEmployerProfile] = useState<any>(null);
+    const handleGetEmployerProfile = async () => {
+        const response = await getEmployerProfile();
+        setEmployerProfile(response);
+    }
+    useEffect(() => {
+        handleGetEmployerProfile();
+    }, []);
     return (
         <header className="h-16 border-b bg-white flex items-center justify-end px-6 sticky top-0 z-10">
 
@@ -22,13 +32,15 @@ export function Emp02Header() {
             <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon">
                     <Bell className="h-5 w-5" />
+                    <span className="text-sm font-medium truncate text-black">{employerProfile?.profile}</span>
                 </Button>
                 <Link href="/employer/emp02Profile">
                     <Button variant="ghost" size="icon">
                         <User className="h-5 w-5" />
                     </Button>
                 </Link>
-            </div>
+                <span className="text-sm font-medium truncate text-black">{employerProfile?.name}</span>
+             </div>
         </header>
     );
 }
