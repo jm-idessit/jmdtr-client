@@ -171,7 +171,8 @@ const makeAutoTracker = (): AutoTracker => ({
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function EmployeeDTRPage() {
-  const [clientTime, setClientTime] = useState<Date>(new Date());
+  const [isMounted, setIsMounted] = useState(false);
+  const [clientTime, setClientTime] = useState<Date | null>(null);
   const [serverNow, setServerNow] = useState<string | null>(null);
   const [attendance, setAttendance] = useState<AttendanceRecord | null>(null);
   const [weeklyData, setWeeklyData] = useState<WeeklyData | null>(null);
@@ -296,6 +297,8 @@ export default function EmployeeDTRPage() {
 
   // ── Client clock ──────────────────────────────────────────────────────────
   useEffect(() => {
+    setIsMounted(true);
+    setClientTime(new Date());
     const t = setInterval(() => setClientTime(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
@@ -326,10 +329,12 @@ export default function EmployeeDTRPage() {
   const btnStates = getButtonStates(attendance, phtMin);
   const status = getStatus(attendance);
 
-  const todayDate = new Date().toLocaleDateString("en-PH", {
-    weekday: "long", year: "numeric", month: "long", day: "numeric",
-    timeZone: "Asia/Manila",
-  });
+  const todayDate = clientTime
+    ? clientTime.toLocaleDateString("en-PH", {
+        weekday: "long", year: "numeric", month: "long", day: "numeric",
+        timeZone: "Asia/Manila",
+      })
+    : "--";
 
   // ─── Manual action handlers ────────────────────────────────────────────────
   const handleClockIn = async () => {
@@ -469,7 +474,14 @@ export default function EmployeeDTRPage() {
                   <span>Philippine Standard Time</span>
                 </div>
                 <div className="text-6xl font-bold font-mono tracking-tight">
-                  {clientTime.toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Manila" })}
+                  {isMounted && clientTime
+                    ? clientTime.toLocaleTimeString("en-PH", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        timeZone: "Asia/Manila",
+                      })
+                    : "--:--:--"}
                 </div>
                 <div className="flex items-center gap-6 pt-2">
                   <div>

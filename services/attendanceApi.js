@@ -1,4 +1,4 @@
-import API from "@/utils/api";
+import { API } from "../utils/api";
 
 // ─── Clock In / Out ───────────────────────────────────────────────────────────
 
@@ -67,3 +67,4 @@ export const getAllAttendance = async (params = {}) => {
   const res = await API.get("/attendance/all", { params });
   return res.data;
 };
+

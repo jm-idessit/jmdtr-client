@@ -7,6 +7,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Card, CardContent } from '../../components/ui/card';
+import { getBaseURL } from '../../../utils/api';
 
 export default function EmployerSignup() {
     const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +32,7 @@ export default function EmployerSignup() {
         }
 
         try {
-            const res = await fetch("http://localhost:5000/api/employers/register", {
+            const res = await fetch(`${getBaseURL()}/employers/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -47,7 +48,7 @@ export default function EmployerSignup() {
             });
 
             const data = await res.json();
-
+            console.log(data)
             if (res.ok) {
                 alert("Employer registered successfully!");
                 window.location.href = "/auth/employerSignin";

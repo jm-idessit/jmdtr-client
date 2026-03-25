@@ -7,11 +7,11 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Card, CardContent } from '../../components/ui/card';
-import { loginEmployer } from '@/services/employerApi';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import { getBaseURL } from '../../../utils/api';
 
-export default function LoginPage() {
+export default function EmployerSignin() {
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
@@ -23,8 +23,16 @@ export default function LoginPage() {
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        const data = await loginEmployer({ email: formData.email, password: formData.password });
-
+        const res = await fetch(`${getBaseURL()}/employers/login`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({ email: formData.email, password: formData.password }),
+        });
+        const data = await res.json();
+        console.log(data)
         if (data.message === "Login successful") {
             router.push("/employer/emp02Home");
         } else {

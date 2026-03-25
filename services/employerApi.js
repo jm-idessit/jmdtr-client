@@ -1,4 +1,4 @@
-import API from "@/utils/api";
+import { API } from "../utils/api";
 
 export const registerEmployer = async (formData) => {
   const res = await API.post("/employers/register", formData);
