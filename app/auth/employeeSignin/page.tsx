@@ -253,7 +253,7 @@ export default function EmployeeLogin() {
                     </div>
 
                     {/* Stats */}
-                    <div className="mt-12 grid grid-cols-3 gap-8 pt-8 border-t border-white/20">
+                    {/* <div className="mt-12 grid grid-cols-3 gap-8 pt-8 border-t border-white/20">
                         <div className="text-center">
                             <div className="text-3xl font-bold mb-1">500+</div>
                             <div className="text-sm opacity-80">Companies</div>
@@ -266,7 +266,7 @@ export default function EmployeeLogin() {
                             <div className="text-3xl font-bold mb-1">99.9%</div>
                             <div className="text-sm opacity-80">Uptime</div>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>

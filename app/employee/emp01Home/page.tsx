@@ -19,6 +19,7 @@ import {
   clockOut,
   autoClockIn,
   autoClockOut,
+  enableOvertime,
   startBreak,
   endBreak,
   autoStartBreak,
@@ -26,7 +27,9 @@ import {
   getTodayAttendance,
   getWeeklyAttendance,
   getServerTime,
+  setRequiredWeeklyHours as saveRequiredWeeklyHours,
 } from "@/services/attendanceApi";
+import { getEmployeeProfile } from '../../../services/employeeApi';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface BreakRecord {
@@ -43,12 +46,14 @@ interface AttendanceRecord {
   totalWorkMinutes?: number;
   lateMinutes?: number;
   undertimeMinutes?: number;
+  overtimeEnabled?: boolean;
 }
 interface WeeklyData {
   records: AttendanceRecord[];
   totalWorkMinutes: number;
   weekStart: string;
   weekEnd: string;
+  requiredWeeklyHours: number;
 }
 interface Toast {
   message: string;
@@ -72,7 +77,9 @@ const SCHEDULE = {
   clockInStart: 8 * 60,
   gracePeriodEnd: 8 * 60 + 30,
   clockOutStd: 17 * 60,
-  retentionEnd: 17 * 60 + 30,
+  retentionEnd: 17 * 60 + 15, // auto clock-out (no overtime) at 5:15 PM
+  overtimeEndManual: 22 * 60, // manual overtime clock-out at 10:00 PM
+  overtimeAutoEnd: 22 * 60 + 30, // auto overtime clock-out at 10:30 PM
 };
 const BREAKS = {
   morning: { windowOpen: 9 * 60 + 50, start: 10 * 60, end: 10 * 60 + 15 },
@@ -135,8 +142,10 @@ const getButtonStates = (att: AttendanceRecord | null, phtMin: number) => {
   const clocked = !notClocked && !clockedOut;
   const onBreak = !!openBreakType(att);
 
-  const canClockIn = notClocked && phtMin >= SCHEDULE.clockInStart && phtMin <= SCHEDULE.gracePeriodEnd;
-  const canClockOut = clocked && !onBreak && phtMin >= SCHEDULE.gracePeriodEnd;
+  const canClockIn = notClocked && phtMin >= SCHEDULE.clockInStart - 30; // earliest 7:30 AM
+  const overtimeEnabled = !!att?.overtimeEnabled;
+  const latestManualClockOut = overtimeEnabled ? SCHEDULE.overtimeEndManual : SCHEDULE.retentionEnd; // 17:15
+  const canClockOut = clocked && !onBreak && phtMin <= latestManualClockOut;
 
   const inBreakWindow =
     (phtMin >= BREAKS.morning.windowOpen && phtMin < BREAKS.morning.end) ||
@@ -169,6 +178,12 @@ const makeAutoTracker = (): AutoTracker => ({
   afternoonBreakEnd: false,
 });
 
+type EmployeeProfile = {
+  profile?: string;
+  name?: string;
+  email?: string;
+};
+
 // ═════════════════════════════════════════════════════════════════════════════
 export default function EmployeeDTRPage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -176,13 +191,32 @@ export default function EmployeeDTRPage() {
   const [serverNow, setServerNow] = useState<string | null>(null);
   const [attendance, setAttendance] = useState<AttendanceRecord | null>(null);
   const [weeklyData, setWeeklyData] = useState<WeeklyData | null>(null);
+  // Student input: how many hours are required for this OJT period (used to compute remaining).
+  const [requiredWeeklyHours, setRequiredWeeklyHours] = useState<number>(45);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [loading, setLoading] = useState({ clockIn: false, clockOut: false, break: false });
+  const [loading, setLoading] = useState({ clockIn: false, clockOut: false, break: false, overtime: false });
 
   const autoRef = useRef<AutoTracker>(makeAutoTracker());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Keeps latest attendance readable inside the polling interval (avoids async-in-setState)
   const attendanceRef = useRef<AttendanceRecord | null>(null);
+  const requiredHoursSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [employeeProfile, setEmployeeProfile] = useState<EmployeeProfile | null>(null);
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const response = await getEmployeeProfile();
+                if (!cancelled) setEmployeeProfile(response as EmployeeProfile);
+            } catch {
+                // Ignore profile fetch errors (sidebar will render without profile).
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
   // ── Toast helper ──────────────────────────────────────────────────────────
   const showToast = useCallback((message: string, type = "success") => {
@@ -221,7 +255,7 @@ export default function EmployeeDTRPage() {
         attendanceRef.current = res.attendance;
         setAttendance(res.attendance);
         showToast("Auto clock-in recorded at 8:30 AM.", "info");
-      } catch {/* already handled server-side */}
+      } catch {/* already handled server-side */ }
     }
 
     // Auto Break Starts
@@ -244,7 +278,7 @@ export default function EmployeeDTRPage() {
           attendanceRef.current = res.attendance;
           setAttendance(res.attendance);
           showToast(`Auto ${breakType} break started.`, "info");
-        } catch {/* ignore */}
+        } catch {/* ignore */ }
       }
     }
 
@@ -267,26 +301,29 @@ export default function EmployeeDTRPage() {
           attendanceRef.current = res.attendance;
           setAttendance(res.attendance);
           showToast(`Auto ${breakType} break ended.`, "info");
-        } catch {/* ignore */}
+        } catch {/* ignore */ }
       }
     }
 
-    // Auto Clock-Out at 17:30
-    if (
-      phtMin >= SCHEDULE.retentionEnd &&
-      !tracker.autoClockOut &&
-      att?.clockIn?.time &&
-      !att?.clockOut?.time
-    ) {
+    // Auto Clock-Out:
+    // - No overtime => 5:15 PM (retentionEnd)
+    // - Overtime enabled => 10:30 PM (overtimeAutoEnd)
+    const autoClockOutTarget = att?.overtimeEnabled ? SCHEDULE.overtimeAutoEnd : SCHEDULE.retentionEnd;
+    if (phtMin >= autoClockOutTarget && !tracker.autoClockOut && att?.clockIn?.time && !att?.clockOut?.time) {
       tracker.autoClockOut = true;
       try {
         const res = await autoClockOut();
         attendanceRef.current = res.attendance;
         setAttendance(res.attendance);
-        showToast("Auto clock-out recorded at 5:30 PM.", "info");
+        showToast(
+          att?.overtimeEnabled
+            ? "Auto clock-out recorded at 10:30 PM."
+            : "Auto clock-out recorded at 5:15 PM.",
+          "info"
+        );
         const weekRes = await getWeeklyAttendance();
         setWeeklyData(weekRes);
-      } catch {/* ignore */}
+      } catch {/* ignore */ }
     }
   }, [showToast]);
 
@@ -294,6 +331,13 @@ export default function EmployeeDTRPage() {
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  // Keep required hours in sync with DB for the current week.
+  useEffect(() => {
+    if (weeklyData?.requiredWeeklyHours && weeklyData.requiredWeeklyHours >= 0.5) {
+      setRequiredWeeklyHours(weeklyData.requiredWeeklyHours);
+    }
+  }, [weeklyData]);
 
   // ── Client clock ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -311,7 +355,7 @@ export default function EmployeeDTRPage() {
         setServerNow(timeRes.now);
         // Read latest attendance from ref — avoids async-in-setState anti-pattern
         evaluateAutoActions(timeRes.now, attendanceRef.current);
-      } catch {/* network hiccup */}
+      } catch {/* network hiccup */ }
     }, 30000);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
@@ -321,7 +365,7 @@ export default function EmployeeDTRPage() {
   // Run auto-actions once initial data is loaded
   useEffect(() => {
     if (serverNow) evaluateAutoActions(serverNow, attendance);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverNow, attendance?.clockIn?.time]);
 
   // ─── Derived state ─────────────────────────────────────────────────────────
@@ -331,9 +375,9 @@ export default function EmployeeDTRPage() {
 
   const todayDate = clientTime
     ? clientTime.toLocaleDateString("en-PH", {
-        weekday: "long", year: "numeric", month: "long", day: "numeric",
-        timeZone: "Asia/Manila",
-      })
+      weekday: "long", year: "numeric", month: "long", day: "numeric",
+      timeZone: "Asia/Manila",
+    })
     : "--";
 
   // ─── Manual action handlers ────────────────────────────────────────────────
@@ -410,8 +454,17 @@ export default function EmployeeDTRPage() {
   // ─── Weekly stats ──────────────────────────────────────────────────────────
   const weeklyTotal = fmtMinutes(weeklyData?.totalWorkMinutes ?? 0);
   const weeklyRecords = weeklyData?.records ?? [];
-  const requiredWeeklyMinutes = 5 * 9 * 60;
-  const weeklyPct = Math.min(100, Math.round(((weeklyData?.totalWorkMinutes ?? 0) / requiredWeeklyMinutes) * 100));
+  const requiredWeeklyMinutes = Math.max(1, Math.round(requiredWeeklyHours * 60));
+  const remainingWeeklyMinutes = Math.max(
+    0,
+    requiredWeeklyMinutes - (weeklyData?.totalWorkMinutes ?? 0)
+  );
+  const weeklyPct = Math.min(
+    100,
+    Math.round(
+      ((weeklyData?.totalWorkMinutes ?? 0) / requiredWeeklyMinutes) * 100
+    )
+  );
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
@@ -428,12 +481,14 @@ export default function EmployeeDTRPage() {
 
       <div className="space-y-6">
         {/* ── Header ───────────────────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Daily Time Record</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-center sm:justify-between gap-2">
+          <div className="text-center sm:text-left">
+            <h1 className="text-2xl font-bold text-gray-900"><span className="text-emerald-700 font-bold text-2xl">{employeeProfile?.name}'s</span> DTR</h1>
             <p className="text-sm text-gray-500 mt-0.5">{todayDate}</p>
           </div>
-          <span className={`self-start sm:self-auto inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold ${status.bg} ${status.color}`}>
+          <span
+            className={`self-center sm:self-auto inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold ${status.bg} ${status.color}`}
+          >
             <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
             {status.label}
           </span>
@@ -441,23 +496,38 @@ export default function EmployeeDTRPage() {
 
         {/* ── Schedule Info ─────────────────────────────────────────────────── */}
         <Card className="border-dashed border-gray-200 bg-white/60">
-          <CardContent className="p-4">
-            <div className="flex flex-wrap gap-6 text-sm text-gray-600 justify-center">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span>Work Duration: 8:00 AM – 5:00 PM</span>
+          <CardContent className="p-3">
+            <div className="grid grid-cols-4 gap-3 text-xs text-gray-600 lg:grid-cols-4">
+              <div className="flex items-start gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5" />
+                <div className="leading-tight">
+                  <div className="text-gray-700 font-medium">Work</div>
+                  <div>8:00 AM – 5:00 PM</div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                <span>Morning Break: 10:00 – 10:15 AM</span>
+
+              <div className="flex items-start gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-1.5" />
+                <div className="leading-tight">
+                  <div className="text-gray-700 font-medium">Morning Break</div>
+                  <div>10:00 – 10:15 AM</div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-orange-500" />
-                <span>Lunch: 12:00 – 1:00 PM</span>
+
+              <div className="flex items-start gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5" />
+                <div className="leading-tight">
+                  <div className="text-gray-700 font-medium">Lunch</div>
+                  <div>12:00 – 1:00 PM</div>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-yellow-500" />
-                <span>Afternoon Break: 3:00 – 3:15 PM</span>
+
+              <div className="flex items-start gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-1.5" />
+                <div className="leading-tight">
+                  <div className="text-gray-700 font-medium">Afternoon Break</div>
+                  <div>3:00 – 3:15 PM</div>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -476,11 +546,11 @@ export default function EmployeeDTRPage() {
                 <div className="text-6xl font-bold font-mono tracking-tight">
                   {isMounted && clientTime
                     ? clientTime.toLocaleTimeString("en-PH", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        second: "2-digit",
-                        timeZone: "Asia/Manila",
-                      })
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      timeZone: "Asia/Manila",
+                    })
                     : "--:--:--"}
                 </div>
                 <div className="flex items-center gap-6 pt-2">
@@ -521,6 +591,34 @@ export default function EmployeeDTRPage() {
 
                 <Button
                   size="lg"
+                  disabled={
+                    !attendance?.clockIn?.time ||
+                    !!attendance?.clockOut?.time ||
+                    !!attendance?.overtimeEnabled ||
+                    phtMin > SCHEDULE.overtimeEndManual ||
+                    loading.overtime
+                  }
+                  className="bg-white/10 border border-white/30 text-white hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed font-semibold gap-2 w-full"
+                  onClick={async () => {
+                    setLoading((l) => ({ ...l, overtime: true }));
+                    try {
+                      const res = await enableOvertime();
+                      attendanceRef.current = res.attendance;
+                      setAttendance(res.attendance);
+                      showToast("Overtime enabled. You can clock out up to 10:00 PM.", "info");
+                    } catch (e: unknown) {
+                      const err = e as { response?: { data?: { message?: string } } };
+                      showToast(err?.response?.data?.message || "Enabling overtime failed.", "error");
+                    } finally {
+                      setLoading((l) => ({ ...l, overtime: false }));
+                    }
+                  }}
+                >
+                  {loading.overtime ? "Enabling…" : "Enable Overtime"}
+                </Button>
+
+                <Button
+                  size="lg"
                   disabled={!btnStates.canClockOut || loading.clockOut}
                   className="bg-white text-red-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed font-semibold gap-2 w-full"
                   onClick={handleClockOut}
@@ -539,8 +637,8 @@ export default function EmployeeDTRPage() {
                   {loading.break
                     ? "Starting…"
                     : btnStates.availableBreakType
-                    ? `Start ${btnStates.availableBreakType.charAt(0).toUpperCase() + btnStates.availableBreakType.slice(1)} Break`
-                    : "Start Break"}
+                      ? `Start ${btnStates.availableBreakType.charAt(0).toUpperCase() + btnStates.availableBreakType.slice(1)} Break`
+                      : "Start Break"}
                 </Button>
 
                 <Button
@@ -612,17 +710,70 @@ export default function EmployeeDTRPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-600">Hours Worked</span>
-                  <span className="font-semibold text-gray-800">{weeklyTotal}</span>
+                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-2">
+                  <div>
+                    <div className="text-gray-600 text-sm">Rendered (Worked) Hours</div>
+                    <div className="font-semibold text-gray-800 text-base">{weeklyTotal}</div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="requiredWeeklyHours"
+                      className="text-sm text-gray-600 whitespace-nowrap"
+                    >
+                      Required OJT Hours
+                    </label>
+                    <input
+                      id="requiredWeeklyHours"
+                      type="number"
+                      min={0.5}
+                      step={0.5}
+                      className="w-28 h-9 rounded-md border border-gray-200 px-2 text-sm"
+                      value={requiredWeeklyHours}
+                      onChange={(e) => {
+                        const n = Number(e.target.value);
+                        if (Number.isFinite(n) && n >= 0.5) {
+                          setRequiredWeeklyHours(n);
+                          if (requiredHoursSaveTimerRef.current) {
+                            clearTimeout(requiredHoursSaveTimerRef.current);
+                          }
+                          requiredHoursSaveTimerRef.current = setTimeout(async () => {
+                            try {
+                              await saveRequiredWeeklyHours(n);
+                              setWeeklyData((prev) =>
+                                prev ? { ...prev, requiredWeeklyHours: n } : prev
+                              );
+                              showToast("Required OJT hours saved.", "info");
+                            } catch (err) {
+                              const e2 = err as { response?: { data?: { message?: string } } };
+                              showToast(
+                                e2?.response?.data?.message || "Failed to save required OJT hours.",
+                                "error"
+                              );
+                            }
+                          }, 500);
+                        }
+                      }}
+                    />
+                    <span className="text-sm text-gray-500">hrs</span>
+                  </div>
                 </div>
+
                 <div className="w-full bg-gray-100 rounded-full h-2.5">
                   <div
                     className="bg-gradient-to-r from-emerald-500 to-blue-500 h-2.5 rounded-full transition-all duration-700"
                     style={{ width: `${weeklyPct}%` }}
                   />
                 </div>
-                <div className="text-right text-xs text-gray-400 mt-1">{weeklyPct}% of 45h target</div>
+
+                <div className="text-right text-xs text-gray-400 mt-1">
+                  {weeklyPct}% of {requiredWeeklyHours}h required
+                </div>
+
+                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                  <span>Remaining:</span>
+                  <span className="font-medium text-gray-700">{fmtMinutes(remainingWeeklyMinutes)}</span>
+                </div>
               </div>
               <div className="grid grid-cols-3 gap-3 pt-2">
                 {(["Days Present", "Days Late", "Total Hrs"] as const).map((label, i) => {
@@ -673,10 +824,16 @@ export default function EmployeeDTRPage() {
                   <tbody>
                     {weeklyRecords.map((r) => {
                       const totalBreakMin =
-                        (["morning", "lunch", "afternoon"] as const).reduce((sum, k) => {
+                        (["lunch"] as const).reduce((sum, k) => {
                           const b = r.breaks?.[k];
                           if (b?.start && b?.end) {
-                            return sum + Math.round((new Date(b.end).getTime() - new Date(b.start).getTime()) / 60000);
+                            // Match server rendered-hours logic:
+                            // clamp break end to official scheduled end time.
+                            const startMin = toPHTMinutes(b.start);
+                            const rawEndMin = toPHTMinutes(b.end);
+                            const officialEndMin = BREAKS[k].end;
+                            const effectiveEndMin = Math.min(rawEndMin, officialEndMin);
+                            return sum + Math.max(0, effectiveEndMin - startMin);
                           }
                           return sum;
                         }, 0);

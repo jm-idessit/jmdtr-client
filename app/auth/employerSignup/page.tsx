@@ -50,7 +50,7 @@ export default function EmployerSignup() {
             const data = await res.json();
             console.log(data)
             if (res.ok) {
-                alert("Employer registered successfully!");
+                alert(`${data.message ?? "Employer registered successfully."}`);
                 window.location.href = "/auth/employerSignin";
             } else {
                 alert(data.message);

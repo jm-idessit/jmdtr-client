@@ -22,6 +22,11 @@ export const autoClockOut = async () => {
   return res.data;
 };
 
+export const enableOvertime = async () => {
+  const res = await API.post("/attendance/overtime/enable");
+  return res.data;
+};
+
 // ─── Breaks ───────────────────────────────────────────────────────────────────
 
 export const startBreak = async (breakType) => {
@@ -53,6 +58,11 @@ export const getTodayAttendance = async () => {
 
 export const getWeeklyAttendance = async () => {
   const res = await API.get("/attendance/weekly");
+  return res.data;
+};
+
+export const setRequiredWeeklyHours = async (requiredHours) => {
+  const res = await API.post("/attendance/ojt/required-hours", { requiredHours });
   return res.data;
 };
 
