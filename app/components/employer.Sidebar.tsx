@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, CreditCard, LogOut, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { LayoutDashboard, CreditCard, LogOut, ChevronLeft, ChevronRight, X, ClipboardList } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { cn } from '../components/ui/utils';
 import Link from 'next/link';
@@ -15,6 +15,7 @@ interface SidebarProps {
 
 const navItems = [
     { icon: LayoutDashboard, label: 'Home', href: '/employer/emp02Home' },
+    { icon: ClipboardList, label: 'Task Manager', href: '/employer/emp02TaskManager' },
     { icon: CreditCard, label: 'Profile', href: '/employer/emp02Profile' },
 ];
 

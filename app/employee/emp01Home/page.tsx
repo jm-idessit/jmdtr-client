@@ -483,7 +483,7 @@ export default function EmployeeDTRPage() {
         {/* ── Header ───────────────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-center sm:justify-between gap-2">
           <div className="text-center sm:text-left">
-            <h1 className="text-2xl font-bold text-gray-900"><span className="text-emerald-700 font-bold text-2xl">{employeeProfile?.name}'s</span> DTR</h1>
+            <h1 className="text-2xl font-bold text-gray-900"><span className="text-emerald-700 font-bold text-2xl">{employeeProfile?.name}&apos;s</span> DTR</h1>
             <p className="text-sm text-gray-500 mt-0.5">{todayDate}</p>
           </div>
           <span
