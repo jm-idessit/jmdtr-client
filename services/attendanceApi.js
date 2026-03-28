@@ -7,8 +7,8 @@ export const clockIn = async () => {
   return res.data;
 };
 
-export const autoClockIn = async () => {
-  const res = await API.post("/attendance/auto-clock-in");
+export const markAbsent = async () => {
+  const res = await API.post("/attendance/mark-absent");
   return res.data;
 };
 

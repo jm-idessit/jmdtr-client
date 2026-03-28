@@ -26,12 +26,31 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Add the Chatbot configuration script */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.chtlConfig = { chatbotId: "5484164381" };
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <TooltipProvider delayDuration={0}>
           <AppLayout>{children}</AppLayout>
         </TooltipProvider>
+
+        {/* Add the Chatbot embed script */}
+        <script
+          async
+          data-id="5484164381"
+          id="chtl-script"
+          type="text/javascript"
+          src="https://chatling.ai/js/embed.js"
+        ></script>
       </body>
     </html>
   );

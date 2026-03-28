@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getEmployerProfile } from '../../services/employerApi';
+import { clearEmployerToken } from '../../utils/authStorage';
 
 interface SidebarProps {
     isOpen?: boolean;
@@ -170,7 +171,12 @@ export default function Emp02Sidebar({ isOpen = false, onClose }: SidebarProps) 
                             className="w-full bg-white hover:bg-gray-100 text-[#6C5DD3] font-semibold rounded-xl gap-2"
                             asChild
                         >
-                            <Link href="/">
+                            <Link
+                                href="/"
+                                onClick={() => {
+                                    clearEmployerToken();
+                                }}
+                            >
                                 <LogOut className="h-5 w-5" />
                                 Logout
                             </Link>

@@ -8,6 +8,7 @@ import { Label } from '../../components/ui/label';
 import { Checkbox } from '../../components/ui/checkbox';
 import { Card, CardContent } from '../../components/ui/card';
 import { getBaseURL } from '../../../utils/api';
+import { setStoredEmployeeToken } from '../../../utils/authStorage';
 
 export default function EmployeeLogin() {
     const [showPassword, setShowPassword] = useState(false);
@@ -33,8 +34,10 @@ export default function EmployeeLogin() {
         });
 
         const data = await res.json();
-        console.log(data)
         if (res.ok) {
+            if (data.token) {
+                setStoredEmployeeToken(data.token);
+            }
             window.location.href = "/employee/emp01Home";
         } else {
             alert(data.message);

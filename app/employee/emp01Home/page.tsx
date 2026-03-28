@@ -10,6 +10,7 @@ import {
   LogIn,
   Timer,
   TrendingUp,
+  UserX,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -17,7 +18,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   clockIn,
   clockOut,
-  autoClockIn,
+  markAbsent,
   autoClockOut,
   enableOvertime,
   startBreak,
@@ -47,6 +48,7 @@ interface AttendanceRecord {
   lateMinutes?: number;
   undertimeMinutes?: number;
   overtimeEnabled?: boolean;
+  declaredAbsent?: boolean;
 }
 interface WeeklyData {
   records: AttendanceRecord[];
@@ -117,6 +119,9 @@ const fmtDate = (dateStr: string): string => {
 
 // ─── Status badge ──────────────────────────────────────────────────────────────
 const getStatus = (att: AttendanceRecord | null) => {
+  if (att?.declaredAbsent && !att.clockIn?.time) {
+    return { label: "Absent", color: "text-gray-600", bg: "bg-gray-200" };
+  }
   if (!att || !att.clockIn?.time) return { label: "Not Started", color: "text-gray-400", bg: "bg-gray-100" };
   if (att.clockOut?.time) return { label: "Clocked Out", color: "text-red-600", bg: "bg-red-100" };
   const openBreak = (["morning", "lunch", "afternoon"] as const).find(
@@ -142,7 +147,10 @@ const getButtonStates = (att: AttendanceRecord | null, phtMin: number) => {
   const clocked = !notClocked && !clockedOut;
   const onBreak = !!openBreakType(att);
 
-  const canClockIn = notClocked && phtMin >= SCHEDULE.clockInStart - 30; // earliest 7:30 AM
+  const canClockIn =
+    notClocked && !att?.declaredAbsent && phtMin >= SCHEDULE.clockInStart - 30; // earliest 7:30 AM
+  const canMarkAbsent =
+    notClocked && !att?.declaredAbsent && phtMin >= SCHEDULE.clockInStart - 30;
   const overtimeEnabled = !!att?.overtimeEnabled;
   const latestManualClockOut = overtimeEnabled ? SCHEDULE.overtimeEndManual : SCHEDULE.retentionEnd; // 17:15
   const canClockOut = clocked && !onBreak && phtMin <= latestManualClockOut;
@@ -163,12 +171,11 @@ const getButtonStates = (att: AttendanceRecord | null, phtMin: number) => {
   const currentOpen = openBreakType(att);
   const canEndBreak = clocked && onBreak && currentOpen === "lunch";
 
-  return { canClockIn, canClockOut, canStartBreak, canEndBreak, availableBreakType, currentOpen };
+  return { canClockIn, canMarkAbsent, canClockOut, canStartBreak, canEndBreak, availableBreakType, currentOpen };
 };
 
 // ─── Auto-action tracker ───────────────────────────────────────────────────────
 const makeAutoTracker = (): AutoTracker => ({
-  autoClockIn: false,
   autoClockOut: false,
   morningBreakStart: false,
   morningBreakEnd: false,
@@ -194,7 +201,13 @@ export default function EmployeeDTRPage() {
   // Student input: how many hours are required for this OJT period (used to compute remaining).
   const [requiredWeeklyHours, setRequiredWeeklyHours] = useState<number>(45);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [loading, setLoading] = useState({ clockIn: false, clockOut: false, break: false, overtime: false });
+  const [loading, setLoading] = useState({
+    clockIn: false,
+    clockOut: false,
+    break: false,
+    overtime: false,
+    markAbsent: false,
+  });
 
   const autoRef = useRef<AutoTracker>(makeAutoTracker());
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -246,17 +259,6 @@ export default function EmployeeDTRPage() {
     if (!now) return;
     const phtMin = toPHTMinutes(now);
     const tracker = autoRef.current;
-
-    // Auto Clock-In at 08:30
-    if (phtMin >= SCHEDULE.gracePeriodEnd && !tracker.autoClockIn && !att?.clockIn?.time) {
-      tracker.autoClockIn = true;
-      try {
-        const res = await autoClockIn();
-        attendanceRef.current = res.attendance;
-        setAttendance(res.attendance);
-        showToast("Auto clock-in recorded at 8:30 AM.", "info");
-      } catch {/* already handled server-side */ }
-    }
 
     // Auto Break Starts
     const breakDefs = [
@@ -387,12 +389,31 @@ export default function EmployeeDTRPage() {
       const res = await clockIn();
       attendanceRef.current = res.attendance;
       setAttendance(res.attendance);
-      showToast("Clocked in successfully! ✅");
+      const late = phtMin >= SCHEDULE.gracePeriodEnd;
+      showToast(late ? "Late clock-in recorded at your current time." : "Clocked in successfully! ✅");
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
       showToast(err?.response?.data?.message || "Clock-in failed.", "error");
     } finally {
       setLoading((l) => ({ ...l, clockIn: false }));
+    }
+  };
+
+  const handleMarkAbsent = async () => {
+    if (!window.confirm("Mark yourself absent for today? You will not be able to clock in unless a supervisor fixes your record.")) {
+      return;
+    }
+    setLoading((l) => ({ ...l, markAbsent: true }));
+    try {
+      const res = await markAbsent();
+      attendanceRef.current = res.attendance;
+      setAttendance(res.attendance);
+      showToast(res.message || "Marked absent for today.", "info");
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { message?: string } } };
+      showToast(err?.response?.data?.message || "Could not mark absent.", "error");
+    } finally {
+      setLoading((l) => ({ ...l, markAbsent: false }));
     }
   };
 
@@ -579,15 +600,38 @@ export default function EmployeeDTRPage() {
 
               {/* Right: Action buttons */}
               <div className="flex flex-col gap-3 min-w-[180px]">
-                <Button
-                  size="lg"
-                  disabled={!btnStates.canClockIn || loading.clockIn}
-                  className="bg-white text-emerald-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed font-semibold gap-2 w-full"
-                  onClick={handleClockIn}
-                >
-                  <LogIn className="w-4 h-4" />
-                  {loading.clockIn ? "Clocking in…" : "Clock In"}
-                </Button>
+                {attendance?.declaredAbsent && !attendance?.clockIn?.time ? (
+                  <p className="text-sm text-white/90 text-center py-2 px-1">
+                    You marked yourself <span className="font-semibold">absent</span> for today.
+                  </p>
+                ) : (
+                  <>
+                    <Button
+                      size="lg"
+                      disabled={!btnStates.canClockIn || loading.clockIn}
+                      className="bg-white text-emerald-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed font-semibold gap-2 w-full"
+                      onClick={handleClockIn}
+                    >
+                      <LogIn className="w-4 h-4" />
+                      {loading.clockIn
+                        ? "Clocking in…"
+                        : phtMin >= SCHEDULE.gracePeriodEnd
+                          ? "Clock In Late"
+                          : "Clock In"}
+                    </Button>
+
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      disabled={!btnStates.canMarkAbsent || loading.markAbsent}
+                      className="border-white/40 bg-white/10 text-white hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed font-semibold gap-2 w-full"
+                      onClick={handleMarkAbsent}
+                    >
+                      <UserX className="w-4 h-4" />
+                      {loading.markAbsent ? "Saving…" : "Mark Absent Today"}
+                    </Button>
+                  </>
+                )}
 
                 <Button
                   size="lg"
@@ -854,7 +898,9 @@ export default function EmployeeDTRPage() {
                           </td>
                           <td className="py-3 px-2">
                             {!r.clockIn?.time ? (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs">Absent</span>
+                              <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs">
+                                {r.declaredAbsent ? "Absent (declared)" : "Absent"}
+                              </span>
                             ) : isLate ? (
                               <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">
                                 <AlertCircle className="w-3 h-3" /> Late

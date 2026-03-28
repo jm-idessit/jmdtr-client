@@ -42,6 +42,7 @@ interface AttendanceRecord {
   totalWorkMinutes?: number;
   lateMinutes?: number;
   undertimeMinutes?: number;
+  declaredAbsent?: boolean;
 }
 
 // ─── Formatting helpers ────────────────────────────────────────────────────────
@@ -88,7 +89,8 @@ const getStatusBadge = (r: AttendanceRecord) => {
   if (!r.clockIn?.time) {
     return (
       <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs">
-        <XCircle className="w-3 h-3" /> Absent
+        <XCircle className="w-3 h-3" />
+        {r.declaredAbsent ? "Absent (declared)" : "Absent"}
       </span>
     );
   }

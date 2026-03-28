@@ -186,7 +186,9 @@ export default function Home() {
                   <Clock className="w-5 h-5 text-emerald-600 mt-0.5" />
                   <div>
                     <div className="font-semibold text-gray-900">Auto-tracking rules</div>
-                    <div className="text-gray-600">Auto clock-in at 8:30 and auto clock-out at 5:30.</div>
+                    <div className="text-gray-600">
+                      Manual clock-in (on time or late), optional mark absent, timed breaks, and auto clock-out.
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -215,8 +217,8 @@ export default function Home() {
                 <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
                     <div className="text-xs text-gray-500">Clock In</div>
-                    <div className="mt-2 text-3xl font-bold text-emerald-700">08:30</div>
-                    <div className="text-xs text-emerald-600 mt-1">auto</div>
+                    <div className="mt-2 text-3xl font-bold text-emerald-700">08:05</div>
+                    <div className="text-xs text-emerald-600 mt-1">tap to clock in</div>
                   </div>
                   <div className="p-4 rounded-2xl bg-gray-50 border">
                     <div className="text-xs text-gray-500">Lunch</div>
@@ -273,7 +275,9 @@ export default function Home() {
                   <Clock className="w-5 h-5 text-emerald-600 mt-0.5" />
                   <div>
                     <div className="font-semibold text-gray-900">Clock In / Clock Out</div>
-                    <div className="text-sm text-gray-600">Automatic clock-in/out based on the DTR schedule.</div>
+                    <div className="text-sm text-gray-600">
+                      Clock in on time or late, mark absent when needed, and clock out (with scheduled auto clock-out).
+                    </div>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
@@ -364,7 +368,7 @@ export default function Home() {
               </div>
               <h3 className="mt-4 text-lg font-bold">1) Clock In</h3>
               <p className="text-gray-600 mt-2 text-sm">
-                Clock in during the morning schedule. The system can auto-record at 8:30 AM.
+                Clock in during the morning window, use &quot;Clock In Late&quot; after 8:30 AM, or mark absent if you are not working today.
               </p>
             </div>
 

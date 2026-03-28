@@ -10,6 +10,7 @@ import { Card, CardContent } from '../../components/ui/card';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import { getBaseURL } from '../../../utils/api';
+import { setStoredEmployerToken } from '../../../utils/authStorage';
 
 export default function EmployerSignin() {
     const router = useRouter();
@@ -32,8 +33,10 @@ export default function EmployerSignin() {
             body: JSON.stringify({ email: formData.email, password: formData.password }),
         });
         const data = await res.json();
-        console.log(data)
         if (data.message === "Login successful") {
+            if (data.token) {
+                setStoredEmployerToken(data.token);
+            }
             router.push("/employer/emp02Home");
         } else {
             toast.error(data.message);

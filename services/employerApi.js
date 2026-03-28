@@ -1,4 +1,5 @@
 import { API } from "../utils/api";
+import { setStoredEmployerToken } from "../utils/authStorage";
 
 export const registerEmployer = async (formData) => {
   const res = await API.post("/employers/register", formData, {
@@ -11,6 +12,9 @@ export const loginEmployer = async (formData) => {
   const res = await API.post("/employers/login", formData, {
     withCredentials: true,
   });
+  if (res.data?.token) {
+    setStoredEmployerToken(res.data.token);
+  }
   return res.data;
 };
 
