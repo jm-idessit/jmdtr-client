@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutDashboard, CreditCard, LogOut, ChevronLeft, ChevronRight, X, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, CreditCard, LogOut, ChevronLeft, ChevronRight, X, ClipboardList, List } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { cn } from '../components/ui/utils';
 import Link from 'next/link';
@@ -16,6 +16,7 @@ interface SidebarProps {
 
 const navItems = [
     { icon: LayoutDashboard, label: 'Home', href: '/employer/emp02Home' },
+    { icon: List, label: 'Requests', href: '/employer/emp02ApprovalLists' },
     { icon: ClipboardList, label: 'Task Manager', href: '/employer/emp02TaskManager' },
     { icon: CreditCard, label: 'Profile', href: '/employer/emp02Profile' },
 ];
@@ -83,13 +84,13 @@ export default function Emp02Sidebar({ isOpen = false, onClose }: SidebarProps) 
                     "overflow-y-auto overflow-x-hidden overscroll-contain",
 
                     // ── Mobile: off-canvas drawer, slides in/out, full dynamic-viewport height ──
-                    "fixed inset-y-0 left-0 w-64 h-[100dvh]",
+                    "fixed inset-y-0 left-0 w-64 h-dvh",
                     "transition-transform duration-300 ease-in-out",
                     isOpen ? "translate-x-0" : "-translate-x-full",
 
                     // ── Desktop (lg+): leave the fixed/translate flow; become a sticky column ──
                     isExpanded ? "lg:w-64" : "lg:w-20",
-                    "lg:static lg:translate-x-0 lg:h-screen lg:sticky lg:top-0 lg:shrink-0",
+                    "lg:sticky lg:translate-x-0 lg:h-screen lg:top-0 lg:shrink-0",
                 )}
             >
                 {/* Logo Section */}
@@ -111,7 +112,7 @@ export default function Emp02Sidebar({ isOpen = false, onClose }: SidebarProps) 
                         </div>
                         {/* Logo Text */}
                         {showLabels && (
-                            <span className="text-white font-bold text-lg truncate max-w-[10.5rem] transition-opacity duration-200">
+                            <span className="text-white font-bold text-lg truncate max-w-42 transition-opacity duration-200">
                                 Employer.CO
                             </span>
                         )}

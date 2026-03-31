@@ -288,7 +288,7 @@ export default function EmployerDashboard() {
               )}
 
               {/* Search */}
-              <div className="relative flex-1 min-w-[200px]">
+              <div className="relative flex-1 min-w-50">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
                   placeholder="Search by name, ID, or department…"
@@ -358,7 +358,7 @@ export default function EmployerDashboard() {
                           {/* Employee */}
                           <td className="py-3 px-2">
                             <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-600 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                              <div className="w-8 h-8 rounded-full bg-linear-to-br from-emerald-600 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
                                 {initials(emp?.name)}
                               </div>
                               <div className="min-w-0">

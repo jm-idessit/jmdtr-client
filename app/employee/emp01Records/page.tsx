@@ -11,7 +11,10 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { useState, useEffect, useCallback } from "react";
-import { getWeeklyAttendance } from "@/services/attendanceApi";
+import { getEmployeeAttendanceRecords, deleteAttendanceRecord, submitAttendanceEditRequest } from "@/services/attendanceApi";
+import AlertDialog from "../../components/alertdialog/alertDialog";
+import EditAttendanceModal from "../../components/modal/EditAttendanceModal";
+import axios from "axios";
 
 interface BreakRecord {
   start?: string;
@@ -34,6 +37,24 @@ interface WeeklyData {
   weekStart: string;
   weekEnd: string;
 }
+
+//  Types
+
+type AttendanceEditPayload = {
+  reason: string;
+  changes: {
+    clockIn?: { time: string | null };
+    clockOut?: { time: string | null };
+    breaks?: {
+      morning?: { start: string | null; end: string | null };
+      lunch?: { start: string | null; end: string | null };
+      afternoon?: { start: string | null; end: string | null };
+    };
+  };
+};
+
+
+
 // ─── Formatting helpers ────────────────────────────────────────────────────────
 const fmtTime = (iso: string | undefined): string => {
   if (!iso) return "--:--";
@@ -80,15 +101,24 @@ const breakDuration = (brk: BreakRecord | undefined): number => {
 };
 
 export default function EmployeeRecordsPage() {
-  const [weeklyData, setWeeklyData] = useState<WeeklyData | null>(null);
+  const [attendanceData, setAttendanceData] = useState<WeeklyData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+
 
   const fetchWeekly = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await getWeeklyAttendance();
-      setWeeklyData(data);
+      const data = await getEmployeeAttendanceRecords();
+      setAttendanceData(data);
     } catch {
       setError("Failed to load weekly records. Please try again." as const);
     } finally {
@@ -100,10 +130,10 @@ export default function EmployeeRecordsPage() {
     fetchWeekly();
   }, [fetchWeekly]);
 
-  const records = weeklyData?.records as AttendanceRecord[] || [];
-  const totalWorkMinutes = weeklyData?.totalWorkMinutes || 0;
-  const weekStart = weeklyData?.weekStart;
-  const weekEnd = weeklyData?.weekEnd;
+  const records = attendanceData?.records as AttendanceRecord[] || [];
+  const totalWorkMinutes = attendanceData?.totalWorkMinutes || 0;
+  const weekStart = attendanceData?.weekStart;
+  const weekEnd = attendanceData?.weekEnd;
 
   const totalBreakMinutes = records.reduce((sum, r) => {
     return (
@@ -118,6 +148,109 @@ export default function EmployeeRecordsPage() {
   const totalUndertimeMinutes = records.reduce((s, r) => s + (r.undertimeMinutes || 0), 0);
   const daysPresent = records.filter((r) => r.clockIn?.time).length;
   const daysLate = records.filter((r) => r.lateMinutes && r.lateMinutes > 0).length;
+
+  const handleDelete = (recordId: string) => {
+    setSelectedId(recordId);
+    setOpenDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedId) return;
+
+    try {
+      setLoading(true);
+      await deleteAttendanceRecord(selectedId);
+      await fetchWeekly();
+    } catch {
+      alert("Failed to delete the record. Please try again.");
+    } finally {
+      setLoading(false);
+      setOpenDialog(false);
+      setSelectedId(null);
+    }
+  };
+
+  const handleOpenEdit = (record: AttendanceRecord) => {
+    setSelectedRecord(record);
+    setEditError(null);
+    setEditOpen(true);
+  };
+
+  const handleCloseEdit = () => {
+    if (editLoading) return;
+    setEditOpen(false);
+    setSelectedRecord(null);
+    setEditError(null);
+  };
+
+  const handleSubmitEdit = async (
+    attendanceId: string,
+    payload: AttendanceEditPayload
+  ) => {
+    try {
+      setEditLoading(true);
+      setEditError(null);
+
+      const requestBody: AttendanceEditPayload = {
+        reason: payload.reason.trim(),
+        changes: {
+          ...(payload.changes.clockIn && {
+            clockIn: {
+              time: payload.changes.clockIn.time ?? null,
+            },
+          }),
+          ...(payload.changes.clockOut && {
+            clockOut: {
+              time: payload.changes.clockOut.time ?? null,
+            },
+          }),
+          ...(payload.changes.breaks && {
+            breaks: {
+              ...(payload.changes.breaks.morning && {
+                morning: {
+                  start: payload.changes.breaks.morning.start ?? null,
+                  end: payload.changes.breaks.morning.end ?? null,
+                },
+              }),
+              ...(payload.changes.breaks.lunch && {
+                lunch: {
+                  start: payload.changes.breaks.lunch.start ?? null,
+                  end: payload.changes.breaks.lunch.end ?? null,
+                },
+              }),
+              ...(payload.changes.breaks.afternoon && {
+                afternoon: {
+                  start: payload.changes.breaks.afternoon.start ?? null,
+                  end: payload.changes.breaks.afternoon.end ?? null,
+                },
+              }),
+            },
+          }),
+        },
+      };
+
+      await submitAttendanceEditRequest(attendanceId, requestBody);
+
+      setEditOpen(false);
+      setSelectedRecord(null);
+
+      await fetchWeekly();
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setEditError(
+          err.response?.data?.message ||
+          err.message ||
+          "Failed to submit edit request."
+        );
+      } else if (err instanceof Error) {
+        setEditError(err.message);
+      } else {
+        setEditError("Failed to submit edit request.");
+      }
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen mx-auto p-4 md:p-6 lg:p-8">
@@ -185,7 +318,7 @@ export default function EmployeeRecordsPage() {
                       {[
                         "Date", "Clock In", "Clock Out",
                         "Morning Brk", "Lunch Brk", "Aftn Brk",
-                        "Work Hours", "Late", "Undertime", "Status"
+                        "Work Hours", "Late", "Undertime", "Status", "Actions"
                       ].map((h) => (
                         <th
                           key={h}
@@ -200,7 +333,7 @@ export default function EmployeeRecordsPage() {
                     {records.map((r) => {
                       const isLate = r.lateMinutes && r.lateMinutes > 0;
                       const hasClockIn = !!r.clockIn?.time;
-                      const isClosed = !!r.clockOut?.time;
+                      // const isClosed = !!r.clockOut?.time;
                       return (
                         <tr key={r._id} className="border-b last:border-0 hover:bg-gray-50">
                           <td className="py-3 px-2 font-medium whitespace-nowrap">{fmtDate(r.date)}</td>
@@ -262,6 +395,18 @@ export default function EmployeeRecordsPage() {
                               </span>
                             )}
                           </td>
+                          <td className="py-3 px-2 text-right">
+                            <button
+                              onClick={() => handleOpenEdit(r)}
+                              className="text-gray-500 hover:text-gray-700 text-sm">
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(r._id)}
+                              className="ml-2 text-red-500 hover:text-red-700 text-sm">
+                              Delete
+                            </button>
+                          </td>
                         </tr>
                       );
                     })}
@@ -282,6 +427,26 @@ export default function EmployeeRecordsPage() {
           </CardContent>
         </Card>
       </div>
+      <AlertDialog
+        open={openDialog}
+        title="Delete Attendance"
+        description="Are you sure you want to delete this attendance record? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDelete}
+        onCancel={() => setOpenDialog(false)}
+        loading={loading}
+      />
+
+      <EditAttendanceModal
+        open={editOpen}
+        record={selectedRecord}
+        loading={editLoading}
+        error={editError}
+        onClose={handleCloseEdit}
+        onSubmit={handleSubmitEdit}
+      />
     </div>
   );
+
 }

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { AppLayout } from "./components/appLayout";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,36 +22,26 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <head>
-        {/* Add the Chatbot configuration script */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.chtlConfig = { chatbotId: "5484164381" };
-            `,
-          }}
-        />
-      </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <TooltipProvider delayDuration={0}>
           <AppLayout>{children}</AppLayout>
         </TooltipProvider>
 
-        {/* Add the Chatbot embed script */}
-        <script
-          async
-          data-id="5484164381"
-          id="chtl-script"
-          type="text/javascript"
+        <Script id="chatling-config" strategy="afterInteractive">
+          {`
+            window.chtlConfig = { chatbotId: "5484164381" };
+          `}
+        </Script>
+
+        <Script
+          id="chatling-embed"
           src="https://chatling.ai/js/embed.js"
-        ></script>
+          strategy="lazyOnload"
+          data-id="5484164381"
+        />
       </body>
     </html>
   );

@@ -26,7 +26,7 @@ import {
   autoStartBreak,
   autoEndBreak,
   getTodayAttendance,
-  getWeeklyAttendance,
+  getEmployeeAttendanceRecords,
   getServerTime,
   setRequiredWeeklyHours as saveRequiredWeeklyHours,
 } from "@/services/attendanceApi";
@@ -215,21 +215,21 @@ export default function EmployeeDTRPage() {
   const attendanceRef = useRef<AttendanceRecord | null>(null);
   const requiredHoursSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [employeeProfile, setEmployeeProfile] = useState<EmployeeProfile | null>(null);
-    useEffect(() => {
-        let cancelled = false;
-        (async () => {
-            try {
-                const response = await getEmployeeProfile();
-                if (!cancelled) setEmployeeProfile(response as EmployeeProfile);
-            } catch {
-                // Ignore profile fetch errors (sidebar will render without profile).
-            }
-        })();
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await getEmployeeProfile();
+        if (!cancelled) setEmployeeProfile(response as EmployeeProfile);
+      } catch {
+        // Ignore profile fetch errors (sidebar will render without profile).
+      }
+    })();
 
-        return () => {
-            cancelled = true;
-        };
-    }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // ── Toast helper ──────────────────────────────────────────────────────────
   const showToast = useCallback((message: string, type = "success") => {
@@ -243,7 +243,7 @@ export default function EmployeeDTRPage() {
       const [timeRes, todayRes, weekRes] = await Promise.all([
         getServerTime(),
         getTodayAttendance(),
-        getWeeklyAttendance(),
+        getEmployeeAttendanceRecords(),
       ]);
       setServerNow(timeRes.now);
       attendanceRef.current = todayRes.attendance;
@@ -323,7 +323,7 @@ export default function EmployeeDTRPage() {
             : "Auto clock-out recorded at 5:15 PM.",
           "info"
         );
-        const weekRes = await getWeeklyAttendance();
+        const weekRes = await getEmployeeAttendanceRecords();
         setWeeklyData(weekRes);
       } catch {/* ignore */ }
     }
@@ -424,7 +424,7 @@ export default function EmployeeDTRPage() {
       attendanceRef.current = res.attendance;
       setAttendance(res.attendance);
       showToast("Clocked out successfully! 👋");
-      const weekRes = await getWeeklyAttendance();
+      const weekRes = await getEmployeeAttendanceRecords();
       setWeeklyData(weekRes);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
@@ -555,7 +555,7 @@ export default function EmployeeDTRPage() {
         </Card>
 
         {/* ── Clock Card ────────────────────────────────────────────────────── */}
-        <Card className="bg-gradient-to-br from-emerald-600 to-purple-700 border-0 text-white overflow-hidden">
+        <Card className="bg-linear-to-br from-emerald-600 to-purple-700 border-0 text-white overflow-hidden">
           <CardContent className="p-6 md:p-10">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
               {/* Left: Live clock + stats */}
@@ -599,7 +599,7 @@ export default function EmployeeDTRPage() {
               </div>
 
               {/* Right: Action buttons */}
-              <div className="flex flex-col gap-3 min-w-[180px]">
+              <div className="flex flex-col gap-3 min-w-45">
                 {attendance?.declaredAbsent && !attendance?.clockIn?.time ? (
                   <p className="text-sm text-white/90 text-center py-2 px-1">
                     You marked yourself <span className="font-semibold">absent</span> for today.
@@ -805,7 +805,7 @@ export default function EmployeeDTRPage() {
 
                 <div className="w-full bg-gray-100 rounded-full h-2.5">
                   <div
-                    className="bg-gradient-to-r from-emerald-500 to-blue-500 h-2.5 rounded-full transition-all duration-700"
+                    className="bg-linear-to-r from-emerald-500 to-blue-500 h-2.5 rounded-full transition-all duration-700"
                     style={{ width: `${weeklyPct}%` }}
                   />
                 </div>

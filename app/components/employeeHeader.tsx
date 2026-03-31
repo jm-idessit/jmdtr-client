@@ -67,7 +67,7 @@ export function Emp01Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
                         <User className="h-5 w-5" />
                     </Button>
                 </Link>
-                <span className="hidden sm:inline-flex text-sm font-medium truncate text-black max-w-[180px]">
+                <span className="hidden sm:inline-flex text-sm font-medium truncate text-black max-w-45">
                     {employeeProfile?.name}
                 </span>
             </div>

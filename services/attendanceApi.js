@@ -56,8 +56,8 @@ export const getTodayAttendance = async () => {
   return res.data;
 };
 
-export const getWeeklyAttendance = async () => {
-  const res = await API.get("/attendance/weekly");
+export const getEmployeeAttendanceRecords = async () => {
+  const res = await API.get("/attendance/records");
   return res.data;
 };
 
@@ -77,3 +77,42 @@ export const getAllAttendance = async (params = {}) => {
   const res = await API.get("/attendance/all", { params });
   return res.data;
 };
+
+// ─── Employee — Delete Attendance Record ──────────────────────────────────────
+
+export const deleteAttendanceRecord = async (recordId) => {
+  const res = await API.delete(`/attendance/record/${recordId}`);
+  return res.data;
+};
+
+// ─── Employee — Edit Requests ─────────────────────────────────────────────────
+
+export const submitAttendanceEditRequest = async (attendanceId, payload) => {
+  const res = await API.post(`/attendance/edit-requests/${attendanceId}`, payload);
+  return res.data;
+};
+
+export const getMyAttendanceEditRequests = async () => {
+  const res = await API.get("/attendance/edit-requests/mine");
+  return res.data;
+};
+
+// ─── Employer — Edit Requests ─────────────────────────────────────────────────
+
+export const getAttendanceEditRequests = async (params = {}) => {
+  const res = await API.get("/attendance/edit-requests", { params });
+  return res.data;
+};
+
+export const approveAttendanceEditRequest = async (requestId) => {
+  const res = await API.patch(`/attendance/edit-requests/${requestId}/approve`);
+  return res.data;
+};
+
+export const rejectAttendanceEditRequest = async (requestId, rejectionReason) => {
+  const res = await API.patch(`/attendance/edit-requests/${requestId}/reject`, { rejectionReason });
+  return res.data;
+} 
+
+
+

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Camera, Mail, Phone, MapPin, Calendar, Briefcase } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -9,11 +9,19 @@ import { Textarea } from '../../components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '../../components/ui/sheet';
+import { getEmployeeProfile } from '../../../services/employeeApi';
+
+type EmployeeProfile = {
+    profile?: string;
+    name?: string;
+    email?: string;
+};
 
 export default function Profile() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [employeeProfile, setEmployeeProfile] = useState<EmployeeProfile | null>(null);
     const [profile, setProfile] = useState({
-        name: 'John Doe',
+        name: "",
         role: 'Senior Product Designer',
         email: 'john@example.com',
         phone: '+1 (555) 123-4567',
@@ -34,6 +42,22 @@ export default function Profile() {
         setIsEditModalOpen(false);
     };
 
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                const response = await getEmployeeProfile();
+                if (!cancelled) setEmployeeProfile(response as EmployeeProfile);
+            } catch {
+                // Ignore profile fetch errors (header will render without profile).
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
     return (
         <div className="min-h-screen mx-auto p-4 md:p-6 lg:p-8">
             <div className="space-y-6">
@@ -51,7 +75,7 @@ export default function Profile() {
                                 </button>
                             </div>
                             <div className="flex-1">
-                                <h1 className="text-2xl font-bold">{profile.name}</h1>
+                                <h1 className="text-2xl font-bold">{employeeProfile?.name || "John Doe"}</h1>
                                 <p className="text-gray-600">{profile.role}</p>
                             </div>
                             <Button onClick={openEditModal}>Edit Profile</Button>
